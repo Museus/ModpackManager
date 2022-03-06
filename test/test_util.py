@@ -1,11 +1,11 @@
 from pathlib import Path
 import unittest
 
-from app.util import get_list_of_modpacks, mods_in_modpack
+from app.util import available_modpacks, mods_in_modpack
 
 
 class TestUtil(unittest.TestCase):
-    def test_get_list_of_modpacks(self):
+    def test_available_modpacks(self):
         EXPECTED_MODPACKS = [
             "HyperDelivery1_Modpack",
             "HyperDelivery2_Modpack",
@@ -16,9 +16,7 @@ class TestUtil(unittest.TestCase):
         ]
 
         test_modpacks_path = Path("test/test_modpacks")
-        modpacks = [
-            modpack.stem for modpack in get_list_of_modpacks(test_modpacks_path)
-        ]
+        modpacks = [modpack.stem for modpack in available_modpacks(test_modpacks_path)]
 
         self.assertEqual(sorted(modpacks), sorted(EXPECTED_MODPACKS))
 

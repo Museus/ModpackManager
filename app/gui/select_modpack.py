@@ -1,16 +1,15 @@
+import logging
 from pathlib import Path
 
 import wx
 
 from config import config
-from util import (
-    get_current_modpack,
-    get_list_of_modpacks,
+from util.exceptions import PathNotSelected
+from util.classes import HadesPath
+from util.util import (
+    available_modpacks,
     install_selected_modpack,
     uninstall_mods,
-    update_hades_folder_path,
-    update_modpack_folder_path,
-    update_selected_modpack,
 )
 
 
@@ -28,14 +27,6 @@ class SelectModpackFrame(wx.Frame):
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         # put some text with a larger bold font on it
-        unverified_modimporter_tex = wx.StaticText(
-            panel, label="Warning: This manager does not verify modimporter.py"
-        )
-        font = unverified_modimporter_tex.GetFont()
-        font = font.Bold()
-        unverified_modimporter_tex.SetFont(font)
-
-        # put some text with a larger bold font on it
         static_text_current_modpack_header = wx.StaticText(
             panel, label="Current Modpack"
         )
@@ -46,7 +37,7 @@ class SelectModpackFrame(wx.Frame):
 
         static_text_current_modpack_name = wx.StaticText(panel, label="Unknown", id=7)
         static_text_current_modpack_name.SetLabel(
-            get_current_modpack(Path(config["HADES"]["path"]))
+            HadesPath(config["HADES"]["path"]).current_modpack
         )
         button_uninstall_current_modpack = wx.Button(panel, label="Uninstall")
         button_uninstall_current_modpack.Bind(wx.EVT_BUTTON, uninstall_mods)
@@ -66,7 +57,7 @@ class SelectModpackFrame(wx.Frame):
             panel, path=config["HADES"]["PATH"], name="HadesFolderPicker"
         )
         folder_picker_hades_folder.Bind(
-            wx.EVT_DIRPICKER_CHANGED, update_hades_folder_path
+            wx.EVT_DIRPICKER_CHANGED, self.update_hades_folder_path
         )
 
         static_text_modpack_folder = wx.StaticText(
@@ -76,7 +67,7 @@ class SelectModpackFrame(wx.Frame):
             panel, path=config["MODPACKS"]["PATH"], name="ModpackFolderPicker"
         )
         folder_picker_modpack_folder.Bind(
-            wx.EVT_DIRPICKER_CHANGED, update_modpack_folder_path
+            wx.EVT_DIRPICKER_CHANGED, self.update_modpack_folder_path
         )
 
         static_text_choose_modpack_header = wx.StaticText(
@@ -88,7 +79,7 @@ class SelectModpackFrame(wx.Frame):
         static_text_choose_modpack_header.SetFont(font)
 
         combo_box_choose_modpack = get_combo_box_choose_modpack(panel, config)
-        combo_box_choose_modpack.Bind(wx.EVT_COMBOBOX, update_selected_modpack)
+        combo_box_choose_modpack.Bind(wx.EVT_COMBOBOX, self.update_selected_modpack)
 
         button_install_modpack = wx.Button(panel, label="Install", name="ButtonInstall")
         button_install_modpack.Bind(wx.EVT_BUTTON, install_selected_modpack)
@@ -144,10 +135,36 @@ class SelectModpackFrame(wx.Frame):
 
         panel.SetSizerAndFit(sizer)
 
+    def update_hades_folder_path(self, event: wx.FileDirPickerEvent):
+        config["HADES"]["PATH"] = event.GetPath()
+        logging.debug(f"Updating hades folder to: {config['HADES']['PATH']}")
+        with open("config.ini", "w") as config_file:
+            config.write(config_file)
+
+    def update_modpack_folder_path(self, event: wx.FileDirPickerEvent):
+        config["MODPACKS"]["PATH"] = event.GetPath()
+        logging.debug(f"Updating modpack folder to: {config['MODPACKS']['PATH']}")
+        with open("config.ini", "w") as config_file:
+            config.write(config_file)
+
+    def update_selected_modpack(self, event: wx.CommandEvent):
+        modpack_name = event.GetString()
+
+        modpack_folder_path = config["MODPACKS"]["PATH"]
+        if not modpack_folder_path:
+            raise PathNotSelected()
+
+        modpack_path = Path(modpack_folder_path) / f"{modpack_name}.zip"
+        modpack_path = modpack_path.resolve()
+
+        config["MODPACKS"]["SELECTED"] = str(modpack_path)
+        with open("config.ini", "w") as config_file:
+            config.write(config_file)
+
 
 def get_combo_box_choose_modpack(panel, config):
     modpack_path = Path(config["MODPACKS"]["PATH"])
-    list_of_modpacks = get_list_of_modpacks(modpack_path)
+    list_of_modpacks = available_modpacks(modpack_path)
 
     return wx.ComboBox(
         panel,

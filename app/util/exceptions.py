@@ -22,6 +22,14 @@ class InvalidModpack(Exception):
     pass
 
 
+class InvalidModimporter(Exception):
+    """This exception is raised when a modimporter is not in the
+    legal_modimporters list.
+    """
+
+    pass
+
+
 class PathNotSelected(Exception):
     """This exception is raised when trying to install or uninstall a modpack when
     no path has been selected for Hades or the Modpack folder.

@@ -2,7 +2,7 @@ import configparser
 import logging
 from pathlib import Path
 
-from exceptions import NoConfigFound
+from util.exceptions import NoConfigFound
 
 
 def create_default_config(config, config_ini_path):
