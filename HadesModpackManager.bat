@@ -1,1 +1,2 @@
-python ./app/app.py
+cd app
+python app.py

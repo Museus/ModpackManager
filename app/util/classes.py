@@ -7,6 +7,7 @@ import logging
 import subprocess
 import time
 
+from legal_modimporters import legal_modimporters
 from util.exceptions import InvalidModimporter, ModsAlreadyInstalled, UnknownHadesPath
 from util.core_util import (
     working_directory,
@@ -181,16 +182,10 @@ class Modpack:
             self.zip_file.getinfo(modimporter_name), path=hades_path.content_folder
         )
 
-        with (
-            open(extracted_modimporter, "rb") as modimporter_file,
-            open("legal_modimporters.txt", "r") as legal_modimporters,
-        ):
+        with open(extracted_modimporter, "rb") as modimporter_file:
             hashed_modimporter = md5(modimporter_file.read()).hexdigest()
-            legal_hashes = [
-                legal_hash.strip() for legal_hash in legal_modimporters.readlines()
-            ]
 
-        if hashed_modimporter not in legal_hashes:
+        if hashed_modimporter not in legal_modimporters:
             Path(extracted_modimporter).unlink()
             raise InvalidModimporter()
 

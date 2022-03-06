@@ -38,6 +38,8 @@ class SelectModpackFrame(wx.Frame):
         static_text_current_modpack_name = wx.StaticText(panel, label="Unknown", id=7)
         static_text_current_modpack_name.SetLabel(
             HadesPath(config["HADES"]["path"]).current_modpack
+            if config["HADES"]["path"]
+            else "Need to select a path!"
         )
         button_uninstall_current_modpack = wx.Button(panel, label="Uninstall")
         button_uninstall_current_modpack.Bind(wx.EVT_BUTTON, uninstall_mods)
@@ -147,6 +149,15 @@ class SelectModpackFrame(wx.Frame):
         with open("config.ini", "w") as config_file:
             config.write(config_file)
 
+        logging.debug(f"Updating available modpacks.")
+        modpack_folder_path = Path(config["MODPACKS"]["PATH"])
+        window = event.GetEventObject().GetParent()
+        combobox = window.FindWindowById(77)
+        combobox.Clear()
+        combobox.Append(available_modpacks(modpack_folder_path))
+        combobox.Fit()
+        window.Fit()
+
     def update_selected_modpack(self, event: wx.CommandEvent):
         modpack_name = event.GetString()
 
@@ -170,4 +181,5 @@ def get_combo_box_choose_modpack(panel, config):
         panel,
         choices=list_of_modpacks,
         name="ComboBoxChooseModpack",
+        id=77,
     )
